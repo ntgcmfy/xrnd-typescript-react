@@ -11,7 +11,7 @@
 
 | AI に任せたこと | 自分で確かめたこと・直したこと |
 | --------------- | ------------------------------ |
-| `docs/research.md` の調査（業務、困りごと、書類、出典 URL） | TODO：実際に URL を開いて確かめたものを書く（例：職種 B の「面接後の記録に21分」「選考が止まる原因は社内の合否調整40.2%」など）。 |
+| `docs/research.md` の調査（業務、困りごと、書類、出典 URL） | TODO：https://www.dodadsj.com/content/241101_concurrent-posts/  https://rpm.zeku.co.jp/research/2026-recruitment-workload 。 |
 | `docs/theme-conditions.md` の7条件に沿ったテーマ案3つ | 案3（入社手続き）は条件3を満たしきれていなかった。タスク管理だけでも使えてしまい、AI がおまけになる恐れがあるため、選ばなかった。 |
 | 選んだ案の最初の下書き | 条件6に合わなかったので直した。日程調整と結果メールは、カレンダーやメールとの連携が必要になるため、範囲から外した。あわせて AI のルール（メモにあることだけをまとめる、人を評価しない、推薦は下書きのみ）と、条件7のための「本物の個人情報を入力しない」注意書きを加えた。 |
 
@@ -45,7 +45,7 @@
 
 | Left to the AI | What I checked or fixed myself |
 | -------------- | ------------------------------ |
-| The research in `docs/research.md` (jobs, pain points, documents, source URLs) | TODO: write which URLs you actually opened (for example the 21-minute record time and the 40.2% stalled-selection figure for job B). |
+| The research in `docs/research.md` (jobs, pain points, documents, source URLs) | TODO:checked link https://rpm.zeku.co.jp/research/2026-recruitment-workload https://www.dodadsj.com/content/241101_concurrent-posts/ |
 | 3 theme ideas checked against the 7 conditions in `docs/theme-conditions.md` | Idea 3 (onboarding) did not fully meet condition 3. Task tracking alone would still be useful, so the AI could become a side feature. I did not choose it. |
 | The first draft of the chosen idea | It broke condition 6, so I fixed it. Scheduling and result emails need calendar and email integration, so I removed them from the scope. I also added the AI rules (summarize only what is in the notes, do not judge people, the recommendation is only a draft) and the "do not enter real personal information" note for condition 7. |
 
