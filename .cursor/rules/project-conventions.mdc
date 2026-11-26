@@ -1,0 +1,75 @@
+---
+description: Conventions for this Next.js (App Router) + Prisma + Neon project.
+globs: src/**,tests/**,e2e/**,prisma/**
+alwaysApply: false
+---
+
+# Project conventions
+
+## Structure
+
+- Pages and route handlers live in `src/app/` (App Router). API routes are `src/app/api/**/route.ts`.
+- Database access goes through `prisma` from `@/lib/prisma`. Do not create another `PrismaClient`.
+- Code that talks to the database or to OpenAI runs on the server only. Put it in `src/lib/` and start the file with `import "server-only";`.
+- Components are Server Components by default. Add `"use client"` only to components that need state, effects or event handlers.
+
+## Database
+
+- Tables are defined in `prisma/schema.prisma`, following `docs/design.md`.
+- After changing the schema, run `npm run db:migrate -- --name <short_name>` (creates a migration, applies it to the development branch and runs `prisma generate`; always pass `--name` so it does not wait for input) and then `npm run db:test:migrate` (applies it to the test branch).
+- After a migration, restart `npm run dev` if it is running. `src/lib/prisma.ts` keeps one `PrismaClient` on `globalThis`, so the running server keeps using the old client until it restarts.
+- A `date` column (a day without a time) is `DateTime @db.Date`. Save and compare today's date as `new Date(todayInJapan())` (UTC midnight of today in Japan), never `new Date()`.
+- Do not use `prisma db push` and do not edit files in `prisma/migrations/` by hand.
+
+## Login (Better Auth)
+
+- Login is already built with Better Auth (`src/lib/auth.ts`, `src/app/api/auth/[...all]/route.ts`, the `/login` and `/signup` screens). Do not build another login and do not change the columns of the `User`, `Session`, `Account` and `Verification` models (adding a relation field to `User` is fine, see below).
+- In pages, call `requireUser()` from `@/lib/session` first; it redirects to `/login` when nobody is logged in.
+- In route handlers, call `getCurrentUser()` from `@/lib/session` first and return 401 when it is null (see `src/app/api/me/route.ts`). Only sign-up and log-in work without login.
+- App data that belongs to a user has a `userId` column pointing to `User.id`. Every query filters by the logged-in user's id, so nobody can read or change another user's data.
+- A table whose rows always belong to a parent row the user owns (for example the lines of an order) does not need its own `userId`: query it through the parent (a Prisma relation filter such as `where: { order: { userId } }`) and filter by the parent's `userId`.
+- Adding a relation field to the `User` model (for example `orders Order[]`, which Prisma needs for every table that points to `User`) is fine; it does not change the user table's columns.
+- When a user opens another user's item (or one that does not exist), the API returns 404 and the screen shows 「見つかりません」 (pages call `notFound()`). Do not return 403.
+- In tests, mock `@/lib/session` instead of logging in.
+
+## Secrets
+
+- Read secrets only from environment variables (`process.env`). Never write a key or connection string in code.
+- Never read, print or edit `.env` or `.env.test`. If a new variable is needed, add it to `.env.example` (and `.env.test.example`) with an empty value and tell the user.
+
+## AI feature (OpenAI)
+
+- Use `getOpenAI()`, `getModel()` and `isAiMock()` from `@/lib/ai/client`. Do not create another `OpenAI` client and never hard-code a model name.
+- Use the Responses API (`responses.create`, or `responses.parse` for structured output). Do not use Chat Completions.
+- Put each AI feature in its own file in `src/lib/ai/` (for example `src/lib/ai/summarize-review.ts`) that exports one async function. Route handlers call that function; they do not call OpenAI directly.
+- Keep the prompt text in `src/lib/ai/prompts/<feature>.ts` as an exported constant, not inline in the code that calls the API.
+- When the result has fields (categories, lists, scores), use Structured Outputs: a zod schema with `zodTextFormat` from `openai/helpers/zod`, and read `output_parsed`.
+- When `isAiMock()` is true, return a fixed result from `src/lib/ai/mocks/<feature>.ts` without calling OpenAI. The E2E test runs with `AI_MOCK=true`.
+- On errors of the AI feature, the route handler returns:
+  - 504 when the OpenAI call times out (`APIConnectionTimeoutError`).
+  - 502 for every other failure: other OpenAI errors (`APIError`, `OpenAIError`), a missing setting such as `OPENAI_MODEL`, and an AI output that breaks the rules in `docs/requirements.md` (for example too many characters). For the last case, throw your own error class from the AI module in `src/lib/ai/`.
+  - The response body has one fixed Japanese message that the screen shows. Log the real error on the server with `console.error`. Never send the raw error message to the screen.
+
+## Screens and their look
+
+- Screens switch by URL with the App Router: one `src/app/<path>/page.tsx` per screen. A screen that needs login calls `requireUser()`, which shows the log-in screen when nobody is logged in. Unknown paths and `notFound()` show `src/app/not-found.tsx` (「見つかりません」).
+- Every screen uses the header in `src/app/layout.tsx` (app name, the user's name and ログアウト) and starts with one `PageHeader` (one h1 per screen), including `src/app/not-found.tsx`.
+- The placeholder 「（アプリの名前）」 appears in three places: the header in `src/app/layout.tsx`, the `metadata` in the same file, and `src/app/page.tsx`. Replace all three with the app name in step 3.
+- Build screens from the shared parts in `src/components/ui/` (`Button`, `LinkButton`, `Card`, `PageHeader`, `Field` with `inputClass`, `ErrorText`) instead of repeating long class lists. Add a new shared part there when the same look is needed twice.
+- Tailwind is already set up: use Tailwind classes only. Do not add another CSS framework or UI library, and do not write inline `style` or colours.
+- Colour roles for buttons: `variant="primary"` for save and create, `variant="ai"` (purple) for anything that calls the AI, `variant="danger"` (red) only for delete. Error text (`ErrorText`, the error under a `Field`) is also red.
+- `Button` is `type="button"` unless you say otherwise. The submit button of a form needs `type="submit"` (see `src/components/auth-form.tsx`).
+- Delete always asks first on the same page (はい / いいえ) with the shared `ConfirmDelete` from `src/components/confirm-delete.tsx`. Do not use `window.confirm`.
+- Buttons and inputs are at least 44px high. Every screen works at 360px width (one column) and uses at most `max-w-3xl` on wide screens.
+- Dates and times are shown only with the functions in `src/lib/format.ts`: `formatDate()` → `2026/11/23` only for `date` columns, `formatDateTime()` → `2026/11/23 14:30` (Japan time) for date-times. "Today" is `todayInJapan()` (today in `Asia/Tokyo`), never the server's date.
+
+## Tests
+
+- Unit tests sit next to the code as `*.test.ts(x)` and do not touch the database or OpenAI (mock them with `vi.mock`). No test may call the real OpenAI API.
+- Integration tests live in `tests/integration/`, call route handlers directly, and use the Neon test branch.
+- The E2E test in `e2e/` covers the one flow shown in the final presentation. Keep it to that one flow.
+- `npm run check` must pass before a task is done.
+
+## Dependencies
+
+- Do not add a package unless the task needs it. If you add one, say why in the PR body.

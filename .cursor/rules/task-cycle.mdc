@@ -1,0 +1,22 @@
+---
+description: How to build one task from docs/tasks.md — branch, implementer, checks, reviewer, PR. Stop after the PR; a human merges.
+alwaysApply: true
+---
+
+# Task cycle
+
+Apply this when the user asks you to build a task from `docs/tasks.md`. For anything else, ignore it.
+
+Build **one task per request**. Do not continue to the next task.
+
+1. Read the task and its "Done when" in `docs/tasks.md`. Read `docs/requirements.md` and `docs/design.md`.
+2. Make sure the working tree is clean and you are on an up-to-date `main`. Create a branch named `task/<number>-<short-name>` (for example `task/1-register-and-list`).
+3. Let the `implementer` subagent build the task. Before you call it, write one line: what you hand over.
+4. Run `npm run check`, and when the task changes a screen also run `npm run e2e`. If either fails, pass the output to the implementer and let it fix only that. Do not skip or delete failing tests to make the check pass.
+5. Let the `reviewer` subagent review the task. When it returns, write one line: PASS or FAIL, and what you do next.
+6. If it FAILS, pass the reasons to the implementer, then go back to step 4.
+7. If the same task FAILS 3 times, stop and ask the user.
+8. When the check passes and the reviewer returns PASS, commit, push the branch, and open a pull request with `gh pr create`. The title is the task name. The body lists each "Done when" item and how to check it.
+9. Stop and report: the PR URL, the result of `npm run check` (and `npm run e2e` if you ran it), and what the user should check by hand before merging.
+
+Never merge the pull request yourself. The user merges it.

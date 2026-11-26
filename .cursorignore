@@ -1,0 +1,5 @@
+# 秘密の情報が入るファイルは、Cursor のエージェントに読ませない
+.env
+.env.*
+!.env.example
+!.env.test.example
