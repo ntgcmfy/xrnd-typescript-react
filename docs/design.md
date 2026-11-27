@@ -1,6 +1,6 @@
 ﻿# Design — InterviewNote (面接メモ整理)
 
-## Tables (4, including the users table)
+## Tables (4 data tables including the users table, plus the 3 login tables Session, Account and Verification)
 
 ### User
 
@@ -11,13 +11,60 @@ The users table.
 | id            | text     | yes      | Primary key              |
 | name          | text     | yes      | Shown in the header      |
 | email         | text     | yes      | Unique. Must pass the email format rule (see API) |
-| hashedPassword | text    | yes      | Password stored hashed, never plain text. Never returned by any API |
 | emailVerified | boolean  | yes      | Default false; not used  |
 | image         | text     | no       | Not used                 |
 | createdAt     | datetime | yes      |                          |
 | updatedAt     | datetime | yes      |                          |
 
-Relations: one user has many applicants.
+Relations: one user has many applicants, many sessions and many accounts. The password is not stored in this table; the hashed password is in Account.
+
+### Session
+
+Login state, one row per login. Not shown on any screen.
+
+| Column    | Type     | Required | Notes                              |
+| --------- | -------- | -------- | ---------------------------------- |
+| id        | text     | yes      | Primary key                        |
+| userId    | text     | yes      | Refers to User.id (cascade delete) |
+| token     | text     | yes      | Unique                             |
+| expiresAt | datetime | yes      |                                    |
+| ipAddress | text     | no       |                                    |
+| userAgent | text     | no       |                                    |
+| createdAt | datetime | yes      |                                    |
+| updatedAt | datetime | yes      |                                    |
+
+### Account
+
+Holds the email-and-password login of a user.
+
+| Column                | Type     | Required | Notes                                                        |
+| --------------------- | -------- | -------- | ------------------------------------------------------------ |
+| id                    | text     | yes      | Primary key                                                  |
+| userId                | text     | yes      | Refers to User.id (cascade delete)                           |
+| accountId             | text     | yes      |                                                              |
+| providerId            | text     | yes      | Always the email-and-password kind                           |
+| password              | text     | no       | Hashed password, never plain text. Never returned by any API |
+| accessToken           | text     | no       | Not used                                                     |
+| refreshToken          | text     | no       | Not used                                                     |
+| idToken               | text     | no       | Not used                                                     |
+| accessTokenExpiresAt  | datetime | no       | Not used                                                     |
+| refreshTokenExpiresAt | datetime | no       | Not used                                                     |
+| scope                 | text     | no       | Not used                                                     |
+| createdAt             | datetime | yes      |                                                              |
+| updatedAt             | datetime | yes      |                                                              |
+
+### Verification
+
+Not used by any screen (there is no email verification or password reset).
+
+| Column     | Type     | Required | Notes       |
+| ---------- | -------- | -------- | ----------- |
+| id         | text     | yes      | Primary key |
+| identifier | text     | yes      |             |
+| value      | text     | yes      |             |
+| expiresAt  | datetime | yes      |             |
+| createdAt  | datetime | yes      |             |
+| updatedAt  | datetime | yes      |             |
 
 ### Applicant
 
